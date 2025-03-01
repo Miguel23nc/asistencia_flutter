@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 
 String obtenerHoraDispositivo() {
   final now = DateTime.now();
-  final formatter = DateFormat('hh:mm A');
+  final formatter = DateFormat('hh:mm a');
   return formatter.format(now);
 }
 
@@ -37,6 +37,9 @@ class AsistenciaService {
                 }),
               );
 
+      final responseData = jsonDecode(response.body);
+      final mensajeServidor = responseData["message"] ?? "Error desconocido.";
+
       if (response.statusCode == 200) {
         return {
           "success": true,
@@ -45,7 +48,7 @@ class AsistenciaService {
       } else {
         return {
           "success": false,
-          "mensaje": "Error en el registro de asistencia.",
+          "mensaje": mensajeServidor, // Ahora muestra el mensaje real
         };
       }
     } catch (e) {

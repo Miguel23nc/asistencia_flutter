@@ -24,11 +24,9 @@ class PageAsistencia extends StatelessWidget {
                     qrCode,
                     tipo,
                   );
-                  _mostrarModal(
-                    context,
-                    respuesta["success"],
-                    respuesta["mensaje"],
-                  );
+                  final mensaje = respuesta["mensaje"] ?? "Error desconocido.";
+
+                  _mostrarModal(context, respuesta["success"], mensaje);
                 } else {
                   await AsistenciaService.guardarAsistenciaLocal(qrCode, tipo);
                   _mostrarModal(
@@ -49,20 +47,24 @@ class PageAsistencia extends StatelessWidget {
   }
 
   void _mostrarModal(BuildContext context, bool exito, String mensaje) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(exito ? "Éxito" : "Error"),
-            content: Text(mensaje),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Aceptar"),
-              ),
-            ],
-          ),
-    );
+    if (!context.mounted) return; // 🔹 Verifica si el contexto sigue activo
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text(exito ? "Éxito" : "Error"),
+              content: Text(mensaje),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Aceptar"),
+                ),
+              ],
+            ),
+      );
+    });
   }
 
   @override

@@ -13,17 +13,16 @@ class QRScannerScreen extends StatefulWidget {
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
   MobileScannerController cameraController = MobileScannerController(
-    facing: CameraFacing.back, // Cámara trasera
+    facing: CameraFacing.front, // ✅ Cámara frontal
     torchEnabled: false,
   );
 
   bool isScanning = true;
-  Timer? _timeoutTimer; // Timer para el tiempo límite
+  Timer? _timeoutTimer;
 
   @override
   void initState() {
     super.initState();
-    // 🔹 Iniciar el temporizador de 10 segundos
     _timeoutTimer = Timer(Duration(seconds: 10), () {
       if (isScanning) {
         _mostrarErrorYSalir();
@@ -33,14 +32,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   @override
   void dispose() {
-    _timeoutTimer
-        ?.cancel(); // Cancelar el temporizador si el widget se destruye
+    _timeoutTimer?.cancel();
     cameraController.dispose();
     super.dispose();
   }
 
   void _mostrarErrorYSalir() {
-    if (!mounted) return; // ✅ Verificamos si el widget está montado
+    if (!mounted) return;
 
     setState(() => isScanning = false);
     Navigator.pop(context);
@@ -50,13 +48,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         context: context,
         builder:
             (context) => AlertDialog(
-              title: Text("Error"),
-              content: Text("No se pudo escanear el QR"),
+              title: Text("Tiempo agotado"),
+              content: Text("No se pudo escanear el QR en 10 segundos."),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    if (mounted) Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: Text("Aceptar"),
                 ),
               ],
@@ -70,20 +66,24 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          MobileScanner(
-            controller: cameraController,
-            onDetect: (capture) {
-              if (isScanning) {
-                final List<Barcode> barcodes = capture.barcodes;
-                if (barcodes.isNotEmpty) {
-                  _timeoutTimer?.cancel(); // Cancelar el temporizador
-                  setState(() => isScanning = false);
+          Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.rotationY(3.1416), // ✅ Activa el modo espejo
+            child: MobileScanner(
+              controller: cameraController,
+              onDetect: (capture) {
+                if (isScanning) {
+                  final List<Barcode> barcodes = capture.barcodes;
+                  if (barcodes.isNotEmpty) {
+                    _timeoutTimer?.cancel();
+                    setState(() => isScanning = false);
 
-                  widget.onScan(barcodes.first.rawValue ?? "");
-                  Navigator.pop(context);
+                    widget.onScan(barcodes.first.rawValue ?? "");
+                    Navigator.pop(context);
+                  }
                 }
-              }
-            },
+              },
+            ),
           ),
           Align(
             alignment: Alignment.bottomCenter,
