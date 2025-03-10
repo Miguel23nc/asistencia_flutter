@@ -11,6 +11,12 @@ String obtenerHoraDispositivo() {
   return formatter.format(now);
 }
 
+String obtenerFechaDispositivo() {
+  final now = DateTime.now();
+  final formatter = DateFormat('dd/MM/yyyy');
+  return formatter.format(now);
+}
+
 class AsistenciaService {
   static Future<Map<String, dynamic>> enviarAsistencia(
     String qrCode,
@@ -27,6 +33,7 @@ class AsistenciaService {
               ? await Axios.post(endpoint, {
                 'dni': qrCode,
                 "ingreso": obtenerHoraDispositivo(),
+                "fecha": obtenerFechaDispositivo(),
               })
               : await http.patch(
                 Uri.parse(Axios.baseUrl + endpoint),
@@ -34,25 +41,39 @@ class AsistenciaService {
                 body: jsonEncode({
                   'dni': qrCode,
                   '$tipo': obtenerHoraDispositivo(),
+                  "fecha": obtenerFechaDispositivo(),
                 }),
               );
 
       final responseData = jsonDecode(response.body);
-      final mensajeServidor = responseData["message"] ?? "Error desconocido.";
+      final int statusCode = response.statusCode;
+      final String mensajeServidor =
+          responseData["message"] ?? "Respuesta desconocida del servidor.";
 
-      if (response.statusCode == 200) {
+      print(
+        "📡 Código de respuesta del backend: $statusCode - $mensajeServidor",
+      );
+
+      if (statusCode >= 200 && statusCode < 300) {
         return {
           "success": true,
-          "mensaje": "Asistencia registrada correctamente.",
+          "status": statusCode,
+          "mensaje": mensajeServidor,
         };
       } else {
         return {
           "success": false,
-          "mensaje": mensajeServidor, // Ahora muestra el mensaje real
+          "status": statusCode,
+          "mensaje": "Código $statusCode: $mensajeServidor",
         };
       }
     } catch (e) {
-      return {"success": false, "mensaje": "Error de conexión: $e"};
+      print("🚨 Error en enviarAsistencia: $e");
+      return {
+        "success": false,
+        "status": 500,
+        "mensaje": "Error en la conexión con el servidor.",
+      };
     }
   }
 

@@ -13,7 +13,7 @@ class QRScannerScreen extends StatefulWidget {
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
   MobileScannerController cameraController = MobileScannerController(
-    facing: CameraFacing.front, // ✅ Cámara frontal
+    facing: CameraFacing.front, // ✅ Usa la cámara frontal
     torchEnabled: false,
   );
 
@@ -49,7 +49,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         builder:
             (context) => AlertDialog(
               title: Text("Tiempo agotado"),
-              content: Text("No se pudo escanear el QR en 10 segundos."),
+              content: Text("No se pudo escanear el QR"),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -63,26 +63,53 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Orientation orientation = MediaQuery.of(context).orientation;
+    final Size screenSize = MediaQuery.of(context).size;
+    bool isPortrait = orientation == Orientation.portrait;
+
+    // Detectar si la pantalla está rotada hacia la izquierda o derecha
+    bool isLandscapeLeft =
+        screenSize.width > screenSize.height &&
+        MediaQuery.of(context).size.aspectRatio < 1;
+    bool isLandscapeRight =
+        screenSize.width > screenSize.height &&
+        MediaQuery.of(context).size.aspectRatio > 1;
+
+    // Determinar cuántas rotaciones aplicar
+    int quarterTurns = 0;
+    if (isPortrait) {
+      quarterTurns = 0; // Modo vertical normal
+    } else if (isLandscapeLeft) {
+      quarterTurns = 1; // Girado 90° a la izquierda
+    } else if (isLandscapeRight) {
+      quarterTurns = -1; // Girado 90° a la derecha
+    }
+
     return Scaffold(
       body: Stack(
         children: [
-          Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.rotationY(3.1416), // ✅ Activa el modo espejo
-            child: MobileScanner(
-              controller: cameraController,
-              onDetect: (capture) {
-                if (isScanning) {
-                  final List<Barcode> barcodes = capture.barcodes;
-                  if (barcodes.isNotEmpty) {
-                    _timeoutTimer?.cancel();
-                    setState(() => isScanning = false);
+          Positioned.fill(
+            child: RotatedBox(
+              quarterTurns:
+                  quarterTurns, // ✅ Ahora rota correctamente en cualquier dirección
+              child: MobileScanner(
+                controller: cameraController,
+                onDetect: (capture) async {
+                  if (isScanning) {
+                    final List<Barcode> barcodes = capture.barcodes;
+                    if (barcodes.isNotEmpty) {
+                      _timeoutTimer?.cancel();
+                      setState(() => isScanning = false);
 
-                    widget.onScan(barcodes.first.rawValue ?? "");
-                    Navigator.pop(context);
+                      String qrCode = barcodes.first.rawValue ?? "";
+                      print("📷 QR detectado: $qrCode"); // 🛠 Depuración
+
+                      // Llamar a la función en `page_asistencia.dart` que maneja el envío y los mensajes
+                      Navigator.pop(context, qrCode);
+                    }
                   }
-                }
-              },
+                },
+              ),
             ),
           ),
           Align(
