@@ -20,23 +20,18 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await Axios.post("/login", {
-        'email': email,
-        'password': password,
-      });
-      final responseData = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && responseData['token'] != null) {
-        _token = responseData['token'];
+      if (email == "asistencia@towerandtower.com.pe" &&
+          password == "Tow3r(2025)*.") {
+        _token = "token_falso_123";
         await _saveToken(_token!);
         notifyListeners();
-
         if (context.mounted) {
-          // 🔹 Evita error si el widget ya no existe
           Navigator.pushReplacementNamed(context, "/asistencia");
         }
       } else {
-        throw Exception(responseData['message'] ?? 'Error al iniciar sesión');
+        throw Exception(
+          "Usuario o contraseña incorrectos",
+        ); // Mantener mensaje real
       }
     } catch (error) {
       print("Error en login: $error");
