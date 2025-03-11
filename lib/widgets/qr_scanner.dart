@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 class QRScannerScreen extends StatefulWidget {
   final Function(String) onScan;
@@ -16,23 +17,40 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     facing: CameraFacing.front, // ✅ Usa la cámara frontal
     torchEnabled: false,
   );
-
   bool isScanning = true;
   Timer? _timeoutTimer;
+  int quarterTurns = 0; // Inicialmente sin rotación
+  StreamSubscription? _sensorSubscription;
 
   @override
   void initState() {
     super.initState();
+
+    // Iniciar temporizador de 10s
     _timeoutTimer = Timer(Duration(seconds: 10), () {
-      if (isScanning) {
-        _mostrarErrorYSalir();
-      }
+      if (isScanning) _mostrarErrorYSalir();
+    });
+
+    // Escuchar cambios del acelerómetro para detectar rotación
+    _sensorSubscription = accelerometerEvents.listen((event) {
+      setState(() {
+        if (event.x.abs() < 3 && event.y > 7) {
+          quarterTurns = 0; // 📱 Vertical normal
+        } else if (event.x > 7) {
+          quarterTurns = -1; // 🔄 Rotado a la izquierda (antes era 1, ahora -1)
+        } else if (event.x < -7) {
+          quarterTurns = 1; // 🔄 Rotado a la derecha (antes era -1, ahora 1)
+        } else if (event.y < -7) {
+          quarterTurns = 2; // 🔄 Volteado completamente
+        }
+      });
     });
   }
 
   @override
   void dispose() {
     _timeoutTimer?.cancel();
+    _sensorSubscription?.cancel(); // Parar detección del acelerómetro
     cameraController.dispose();
     super.dispose();
   }
@@ -63,35 +81,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Orientation orientation = MediaQuery.of(context).orientation;
-    final Size screenSize = MediaQuery.of(context).size;
-    bool isPortrait = orientation == Orientation.portrait;
-
-    // Detectar si la pantalla está rotada hacia la izquierda o derecha
-    bool isLandscapeLeft =
-        screenSize.width > screenSize.height &&
-        MediaQuery.of(context).size.aspectRatio < 1;
-    bool isLandscapeRight =
-        screenSize.width > screenSize.height &&
-        MediaQuery.of(context).size.aspectRatio > 1;
-
-    // Determinar cuántas rotaciones aplicar
-    int quarterTurns = 0;
-    if (isPortrait) {
-      quarterTurns = 0; // Modo vertical normal
-    } else if (isLandscapeLeft) {
-      quarterTurns = 1; // Girado 90° a la izquierda
-    } else if (isLandscapeRight) {
-      quarterTurns = -1; // Girado 90° a la derecha
-    }
-
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
             child: RotatedBox(
-              quarterTurns:
-                  quarterTurns, // ✅ Ahora rota correctamente en cualquier dirección
+              quarterTurns: quarterTurns, // ✅ Aplica la rotación correcta
               child: MobileScanner(
                 controller: cameraController,
                 onDetect: (capture) async {
@@ -102,10 +97,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                       setState(() => isScanning = false);
 
                       String qrCode = barcodes.first.rawValue ?? "";
-                      print("📷 QR detectado: $qrCode"); // 🛠 Depuración
+                      print("Código QR detectado: $qrCode");
 
-                      // Llamar a la función en `page_asistencia.dart` que maneja el envío y los mensajes
-                      Navigator.pop(context, qrCode);
+                      if (!mounted) return;
+
+                      await widget.onScan(qrCode);
+
+                      if (mounted) Navigator.pop(context);
                     }
                   }
                 },

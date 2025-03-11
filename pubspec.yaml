@@ -9,6 +9,7 @@ environment:
   sdk: ^3.7.0
 
 dependencies:
+  sensors_plus: ^3.0.3
   connectivity_plus: ^5.0.2
   flutter:
     sdk: flutter

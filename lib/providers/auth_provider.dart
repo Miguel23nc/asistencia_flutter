@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:asistencia_flutter/utils/axios.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
-
   String? _token;
   bool _isLoading = false;
 
@@ -22,33 +20,24 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // ✅ Comparar con valores fijos en lugar de llamar al backend
-      if (email == "asistencia.offline@tower.com.pe" &&
-          password == "clave123") {
-        _token = "token_falso"; // No se necesita un token real
+      final response = await Axios.post("/login", {
+        'email': email,
+        'password': password,
+      });
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['token'] != null) {
+        _token = responseData['token'];
+        await _saveToken(_token!);
         notifyListeners();
-        Navigator.pushReplacementNamed(context, "/asistencia");
+
+        if (context.mounted) {
+          // 🔹 Evita error si el widget ya no existe
+          Navigator.pushReplacementNamed(context, "/asistencia");
+        }
       } else {
-        throw Exception("Credenciales incorrectas");
+        throw Exception(responseData['message'] ?? 'Error al iniciar sesión');
       }
-
-      // final response = await Axios.post("/login", {
-      //   'email': email,
-      //   'password': password,
-      // });
-      // final responseData = jsonDecode(response.body);
-
-      // if (response.statusCode == 200 && responseData['token'] != null) {
-      //   _token = responseData['token'];
-      //   await _saveToken(_token!);
-      //   notifyListeners();
-
-      //   if (context.mounted) {
-      //     Navigator.pushReplacementNamed(context, "/asistencia");
-      //   }
-      // } else {
-      //   throw Exception(responseData['message'] ?? 'Error al iniciar sesión');
-      // }
     } catch (error) {
       print("Error en login: $error");
       throw Exception('Error de conexión con el servidor');
@@ -69,18 +58,18 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔹 Guardar token de manera segura
   Future<void> _saveToken(String token) async {
-    await secureStorage.write(key: 'token', value: token);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
   }
 
-  // 🔹 Eliminar token de manera segura
   Future<void> _removeToken() async {
-    await secureStorage.delete(key: 'token');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
   }
 
-  // 🔹 Obtener token de manera segura
   Future<String?> _getToken() async {
-    return await secureStorage.read(key: 'token');
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
   }
 }
