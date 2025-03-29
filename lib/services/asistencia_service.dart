@@ -35,15 +35,11 @@ class AsistenciaService {
                 "ingreso": obtenerHoraDispositivo(),
                 "fecha": obtenerFechaDispositivo(),
               })
-              : await http.patch(
-                Uri.parse(Axios.baseUrl + endpoint),
-                headers: {"Content-Type": "application/json"},
-                body: jsonEncode({
-                  'dni': qrCode,
-                  '$tipo': obtenerHoraDispositivo(),
-                  "fecha": obtenerFechaDispositivo(),
-                }),
-              );
+              : await Axios.patch(endpoint, {
+                'dni': qrCode,
+                '$tipo': obtenerHoraDispositivo(),
+                "fecha": obtenerFechaDispositivo(),
+              });
 
       final responseData = jsonDecode(response.body);
       final int statusCode = response.statusCode;

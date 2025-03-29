@@ -20,22 +20,27 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (email == "asistencia@towerandtower.com.pe" &&
-          password == "Tow3r(2025)*.") {
-        _token = "token_falso_123";
+      final response = await Axios.post("/login", {
+        "email": email,
+        "password": password,
+      });
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data["token"] != null) {
+        _token = data["token"];
         await _saveToken(_token!);
         notifyListeners();
+
         if (context.mounted) {
           Navigator.pushReplacementNamed(context, "/asistencia");
         }
       } else {
-        throw Exception(
-          "Usuario o contraseña incorrectos",
-        ); // Mantener mensaje real
+        throw Exception(data["message"] ?? "Error en login");
       }
     } catch (error) {
       print("Error en login: $error");
-      throw Exception('Error de conexión con el servidor');
+      throw Exception("Error de conexión con el servidor");
     } finally {
       _isLoading = false;
       notifyListeners();
