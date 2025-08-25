@@ -43,7 +43,7 @@ class AsistenciaService {
                 'dni': qrCode,
                 '$tipo': obtenerHoraDispositivo(),
                 "fecha": obtenerFechaDispositivo(),
-                "'$tipo'Sede": sede,
+                "${tipo}Sede": sede,
               });
 
       final responseData = jsonDecode(response.body);
