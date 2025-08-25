@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:asistencia_flutter/providers/auth_provider.dart';
+// import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:asistencia_flutter/utils/axios.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 String obtenerHoraDispositivo() {
@@ -28,17 +29,21 @@ class AsistenciaService {
             : '/patchAsistenciaColaborador';
 
     try {
+      final sede = await AuthProvider().getSede() ?? "Sede no definida";
+
       final response =
           (tipo == 'ingreso')
               ? await Axios.post(endpoint, {
                 'dni': qrCode,
                 "ingreso": obtenerHoraDispositivo(),
                 "fecha": obtenerFechaDispositivo(),
+                "ingresoSede": sede,
               })
               : await Axios.patch(endpoint, {
                 'dni': qrCode,
                 '$tipo': obtenerHoraDispositivo(),
                 "fecha": obtenerFechaDispositivo(),
+                "'$tipo'Sede": sede,
               });
 
       final responseData = jsonDecode(response.body);

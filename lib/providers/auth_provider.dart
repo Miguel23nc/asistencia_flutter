@@ -14,6 +14,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> login(
     String email,
     String password,
+    String sede,
     BuildContext context,
   ) async {
     _isLoading = true;
@@ -24,7 +25,8 @@ class AuthProvider extends ChangeNotifier {
         "email": email,
         "password": password,
       });
-
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('sede', sede);
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data["token"] != null) {
@@ -71,5 +73,10 @@ class AuthProvider extends ChangeNotifier {
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
+  }
+
+  Future<String?> getSede() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('sede');
   }
 }

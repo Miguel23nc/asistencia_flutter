@@ -11,14 +11,17 @@ class LoginAsistencia extends StatefulWidget {
 class _LoginAsistenciaState extends State<LoginAsistencia> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _sedeController = TextEditingController();
+
   bool _isLoading = false;
 
   void _login() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
+    String sede = _sedeController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      _mostrarAlerta("Por favor ingresa usuario y contraseña", false);
+    if (email.isEmpty || password.isEmpty || sede.isEmpty) {
+      _mostrarAlerta("Por favor ingresa usuario, contraseña y sede", false);
       return;
     }
 
@@ -28,7 +31,7 @@ class _LoginAsistenciaState extends State<LoginAsistencia> {
       await Provider.of<AuthProvider>(
         context,
         listen: false,
-      ).login(email, password, context);
+      ).login(email, password, sede, context);
     } catch (e) {
       _mostrarAlerta("Error al iniciar sesión: ${e.toString()}", false);
     } finally {
@@ -109,6 +112,15 @@ class _LoginAsistenciaState extends State<LoginAsistencia> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 15),
+                        CustomTextField(
+                          icon: Icons.business,
+                          hintText: "SEDE",
+                          width: screenWidth > 1000 ? 350 : 280,
+                          controller: _sedeController,
+                          onSubmitted: (_) => _login(),
+                        ),
+                        const SizedBox(height: 15),
+
                         CustomTextField(
                           icon: Icons.email,
                           hintText: "USUARIO",
