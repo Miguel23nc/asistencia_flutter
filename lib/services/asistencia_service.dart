@@ -51,10 +51,6 @@ class AsistenciaService {
       final String mensajeServidor =
           responseData["message"] ?? "Respuesta desconocida del servidor.";
 
-      print(
-        "📡 Código de respuesta del backend: $statusCode - $mensajeServidor",
-      );
-
       if (statusCode >= 200 && statusCode < 300) {
         return {
           "success": true,
@@ -69,7 +65,6 @@ class AsistenciaService {
         };
       }
     } catch (e) {
-      print("🚨 Error en enviarAsistencia: $e");
       return {
         "success": false,
         "status": 500,

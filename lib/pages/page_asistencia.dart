@@ -62,22 +62,62 @@ class PageAsistencia extends StatelessWidget {
   }
 
   void _mostrarModal(BuildContext context, bool exito, String mensaje) {
-    if (!context.mounted) return; // 🔹 Verifica si el contexto sigue activo
+    if (!context.mounted) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       showDialog(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: Text(exito ? "Éxito" : "Error"),
-              content: Text(mensaje),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("Aceptar"),
+        builder: (context) {
+          Future.delayed(const Duration(seconds: 3), () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+          });
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  exito ? Icons.check_circle : Icons.error,
+                  color: exito ? Colors.green : Colors.red,
+                  size: 30,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  exito ? "Éxito" : "Error",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: exito ? Colors.green : Colors.red,
+                  ),
                 ),
               ],
             ),
+            content: Text(
+              mensaje,
+              style: TextStyle(fontSize: 18, color: Colors.black87),
+            ),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: exito ? Colors.green : Colors.red,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Aceptar", style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          );
+        },
       );
     });
   }

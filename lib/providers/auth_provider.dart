@@ -41,7 +41,6 @@ class AuthProvider extends ChangeNotifier {
         throw Exception(data["message"] ?? "Error en login");
       }
     } catch (error) {
-      print("Error en login: $error");
       throw Exception("Error de conexión con el servidor");
     } finally {
       _isLoading = false;
