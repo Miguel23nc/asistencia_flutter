@@ -92,7 +92,6 @@ class AsistenciaService {
     final prefs = await SharedPreferences.getInstance();
     List<String> asistencias =
         prefs.getStringList('asistencias_pendientes') ?? [];
-
     if (asistencias.isEmpty) return;
 
     Map<String, List<Map<String, dynamic>>> asistenciasAgrupadas = {};
