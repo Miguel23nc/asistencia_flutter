@@ -93,7 +93,6 @@ class AsistenciaService {
     List<String> asistencias =
         prefs.getStringList('asistencias_pendientes') ?? [];
     if (asistencias.isEmpty) return;
-
     Map<String, List<Map<String, dynamic>>> asistenciasAgrupadas = {};
 
     for (String asistencia in asistencias) {
